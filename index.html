@@ -15,119 +15,178 @@
 </head>
 <body>
   <div id="app">
-    <!-- Header -->
+
     <header id="header">
       <h1>কখন খাবো</h1>
-      <p class="subtitle">Medicine Reminder</p>
+      <p class="subtitle">Health Reminder</p>
     </header>
 
-    <!-- Main View: Medicine List -->
-    <main id="view-list">
-      <div id="empty-state" class="empty-state">
-        <p>No medicines added yet.</p>
-        <p class="hint">Tap + to add your first medicine.</p>
+    <!-- Dashboard -->
+    <main id="view-dashboard">
+      <div id="daily-progress" class="card"></div>
+      <div id="water-widget" class="card hidden"></div>
+      <div id="dashboard-empty" class="empty-msg hidden">
+        <p>No reminders yet.</p>
+        <p style="margin-top:6px;font-size:.8rem">Tap + to get started.</p>
       </div>
-      <ul id="medicine-list"></ul>
-      <button id="btn-add" class="fab" aria-label="Add medicine">+</button>
+      <h3 id="timeline-heading" class="section-label">Upcoming</h3>
+      <ul id="timeline-list" class="item-list"></ul>
+      <p id="timeline-empty" class="empty-msg hidden">No upcoming reminders today.</p>
+      <h3 class="section-label">Categories</h3>
+      <ul id="category-nav" class="item-list"></ul>
+      <button id="btn-add" class="fab" aria-label="Add reminder">+</button>
     </main>
 
-    <!-- Add/Edit Medicine View -->
+    <!-- Category Picker -->
+    <section id="view-picker" class="view hidden">
+      <div class="view-header">
+        <button class="btn-back">&larr;</button>
+        <h2>Choose Category</h2>
+      </div>
+      <ul id="picker-list" class="item-list padded"></ul>
+    </section>
+
+    <!-- Category List -->
+    <section id="view-cat-list" class="view hidden">
+      <div class="view-header">
+        <button class="btn-back">&larr;</button>
+        <h2 id="cat-list-title"></h2>
+      </div>
+      <ul id="cat-list-items" class="item-list padded"></ul>
+      <p id="cat-list-empty" class="empty-msg hidden">Nothing here yet.</p>
+    </section>
+
+    <!-- Add / Edit Form -->
     <section id="view-form" class="view hidden">
       <div class="view-header">
-        <button class="btn-back" aria-label="Go back">&larr;</button>
-        <h2 id="form-title">Add Medicine</h2>
+        <button class="btn-back">&larr;</button>
+        <h2 id="form-title">Add Reminder</h2>
       </div>
-      <form id="medicine-form" autocomplete="off">
-        <label for="med-name">Medicine Name</label>
-        <input type="text" id="med-name" required placeholder="e.g. Napa Extra" maxlength="60">
+      <form id="reminder-form" autocomplete="off">
+        <input type="hidden" id="f-category">
 
-        <label for="med-notes">Notes (optional)</label>
-        <input type="text" id="med-notes" placeholder="e.g. After meals" maxlength="120">
+        <label for="f-name">Name</label>
+        <input type="text" id="f-name" required maxlength="60">
 
-        <fieldset>
+        <label for="f-notes">Notes (optional)</label>
+        <input type="text" id="f-notes" maxlength="120">
+
+        <div id="grp-schedule-type" class="form-group hidden">
+          <label>Schedule Type</label>
+          <div class="toggle-row" data-field="scheduleType">
+            <button type="button" class="toggle-btn active" data-val="fixed">Fixed Times</button>
+            <button type="button" class="toggle-btn" data-val="interval">Interval</button>
+          </div>
+        </div>
+
+        <div id="grp-water-mode" class="form-group hidden">
+          <label>Tracking Mode</label>
+          <div class="toggle-row" data-field="waterMode">
+            <button type="button" class="toggle-btn active" data-val="goal">Daily Goal</button>
+            <button type="button" class="toggle-btn" data-val="interval">Interval</button>
+          </div>
+        </div>
+
+        <div id="grp-fixed-times" class="form-group hidden">
+          <label>Reminder Times</label>
+          <div id="fixed-times-container"></div>
+          <button type="button" id="btn-add-time" class="btn-outline">+ Add Time</button>
+        </div>
+
+        <div id="grp-sleep" class="form-group hidden">
+          <label for="f-bedtime">Bedtime</label>
+          <input type="time" id="f-bedtime" value="23:00">
+          <label for="f-wakeup">Wake Up</label>
+          <input type="time" id="f-wakeup" value="07:00">
+        </div>
+
+        <fieldset id="grp-interval" class="form-group hidden">
           <legend>Reminder Interval</legend>
-          <div class="interval-row">
-            <div class="interval-field">
-              <input type="number" id="med-hours" min="0" max="72" value="8" required>
+          <div class="row-2">
+            <div class="input-with-label">
+              <input type="number" id="f-hours" min="0" max="72" value="8">
               <span>hours</span>
             </div>
-            <div class="interval-field">
-              <input type="number" id="med-minutes" min="0" max="59" value="0" required>
+            <div class="input-with-label">
+              <input type="number" id="f-minutes" min="0" max="59" value="0">
               <span>min</span>
             </div>
           </div>
         </fieldset>
 
-        <label for="med-duration">Duration (days)</label>
-        <input type="number" id="med-duration" min="1" max="365" value="7" required>
+        <div id="grp-water-goal" class="form-group hidden">
+          <label for="f-goal-target">Daily Target</label>
+          <input type="number" id="f-goal-target" min="1" max="100" value="8">
+          <label>Unit</label>
+          <div class="toggle-row" data-field="goalUnit">
+            <button type="button" class="toggle-btn active" data-val="glasses">Glasses</button>
+            <button type="button" class="toggle-btn" data-val="litres">Litres</button>
+            <button type="button" class="toggle-btn" data-val="ml">ml</button>
+          </div>
+          <fieldset>
+            <legend>Nudge Interval</legend>
+            <div class="row-2">
+              <div class="input-with-label">
+                <input type="number" id="f-nudge-hours" min="0" max="24" value="1">
+                <span>hours</span>
+              </div>
+              <div class="input-with-label">
+                <input type="number" id="f-nudge-minutes" min="0" max="59" value="30">
+                <span>min</span>
+              </div>
+            </div>
+          </fieldset>
+        </div>
 
-        <label for="med-start">Start Date & Time</label>
-        <input type="datetime-local" id="med-start" required>
+        <div id="grp-duration" class="form-group">
+          <label for="f-duration">Duration (days)</label>
+          <input type="number" id="f-duration" min="1" max="365" value="7">
+          <label class="check-row">
+            <input type="checkbox" id="f-ongoing"> Ongoing (no end date)
+          </label>
+        </div>
+
+        <div id="grp-start" class="form-group">
+          <label for="f-start">Start Date & Time</label>
+          <input type="datetime-local" id="f-start">
+        </div>
 
         <div class="form-actions">
-          <button type="submit" class="btn-primary" id="btn-save">Save</button>
-          <button type="button" class="btn-secondary" id="btn-cancel-form">Cancel</button>
+          <button type="submit" class="btn primary" id="btn-save">Save</button>
+          <button type="button" class="btn secondary" id="btn-cancel-form">Cancel</button>
         </div>
       </form>
     </section>
 
-    <!-- Medicine Detail View -->
+    <!-- Detail View -->
     <section id="view-detail" class="view hidden">
       <div class="view-header">
-        <button class="btn-back" aria-label="Go back">&larr;</button>
+        <button class="btn-back">&larr;</button>
         <h2 id="detail-name"></h2>
       </div>
-      <div id="detail-content">
-        <div class="detail-info">
-          <div class="detail-row">
-            <span class="detail-label">Interval</span>
-            <span id="detail-interval"></span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Duration</span>
-            <span id="detail-duration"></span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Started</span>
-            <span id="detail-start"></span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Ends</span>
-            <span id="detail-end"></span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Status</span>
-            <span id="detail-status"></span>
-          </div>
-          <div class="detail-row" id="detail-next-row">
-            <span class="detail-label">Next Dose</span>
-            <span id="detail-next"></span>
-          </div>
-        </div>
+      <div id="detail-body">
+        <div id="detail-info" class="card info-card"></div>
         <div class="detail-actions">
-          <button class="btn-primary btn-sm" id="btn-edit">Edit</button>
-          <button class="btn-danger btn-sm" id="btn-delete">Delete</button>
+          <button class="btn primary sm" id="btn-edit">Edit</button>
+          <button class="btn danger sm" id="btn-delete">Delete</button>
         </div>
-
-        <h3 class="section-title">Upcoming Doses</h3>
-        <ul id="upcoming-doses" class="dose-list"></ul>
-
-        <h3 class="section-title">Dose History</h3>
-        <ul id="dose-history" class="dose-list"></ul>
+        <div id="detail-streak" class="streak hidden"></div>
+        <h3 class="section-label">Upcoming</h3>
+        <ul id="upcoming-list" class="item-list"></ul>
+        <h3 class="section-label">History</h3>
+        <ul id="history-list" class="item-list"></ul>
       </div>
     </section>
 
-    <!-- Notification Permission Banner -->
-    <div id="notif-banner" class="notif-banner hidden">
-      <p>Enable notifications for medicine reminders</p>
-      <button id="btn-enable-notif" class="btn-primary btn-sm">Enable</button>
+    <!-- Notification banner -->
+    <div id="notif-banner" class="banner hidden">
+      <p>Enable notifications for reminders</p>
+      <button id="btn-enable-notif" class="btn primary sm">Enable</button>
       <button id="btn-dismiss-notif" class="btn-text">Later</button>
     </div>
 
-    <!-- Version -->
-    <footer id="version">v1.0.0</footer>
+    <footer id="version">v2.0.0</footer>
   </div>
-
   <script src="app.js"></script>
 </body>
 </html>
