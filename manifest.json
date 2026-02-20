@@ -1,7 +1,7 @@
 {
   "name": "কখন খাবো — Medicine Reminder",
   "short_name": "কখন খাবো",
-  "description": "A simple medicine reminder PWA for daily medication tracking.",
+  "description": "Health reminder PWA — medicines, meals, water, supplements, exercise, sleep & more.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
