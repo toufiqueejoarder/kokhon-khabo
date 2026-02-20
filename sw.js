@@ -1,9 +1,9 @@
-const CACHE_NAME = 'kokhon-khabo-v2';
+const CACHE_NAME = 'kokhon-khabo-v2.0.1';
 const ASSETS = [
   './',
   './index.html',
-  './style.css',
-  './app.js',
+  './style.css?v=2.0.1',
+  './app.js?v=2.0.1',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
