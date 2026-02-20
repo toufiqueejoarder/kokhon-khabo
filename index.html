@@ -25,7 +25,11 @@
     <main id="view-dashboard">
       <div id="daily-progress" class="card"></div>
       <div id="water-widget" class="card hidden"></div>
-      <h3 class="section-label">Upcoming</h3>
+      <div id="dashboard-empty" class="empty-msg hidden">
+        <p>No reminders yet.</p>
+        <p style="margin-top:6px;font-size:.8rem">Tap + to get started.</p>
+      </div>
+      <h3 id="timeline-heading" class="section-label">Upcoming</h3>
       <ul id="timeline-list" class="item-list"></ul>
       <p id="timeline-empty" class="empty-msg hidden">No upcoming reminders today.</p>
       <h3 class="section-label">Categories</h3>

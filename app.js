@@ -11,7 +11,7 @@
     water:       { label: 'Water',       icon: '💧', color: '#38bdf8', scheduleTypes: ['goal','interval'],  defaults: { hours: 1, min: 30, dur: 0 }, notifText: (n, r) => `Drink some water — ${r._goalToday || 0}/${r.goalTarget} ${r.goalUnit || 'glasses'}` },
     supplements: { label: 'Supplements', icon: '💎', color: '#a78bfa', scheduleTypes: ['interval'],        defaults: { hours: 24, min: 0, dur: 30 }, notifText: (n) => `Time to take ${n}` },
     exercise:    { label: 'Exercise',    icon: '🏃', color: '#4ade80', scheduleTypes: ['fixed','interval'], defaults: { hours: 0, min: 0, dur: 0  }, notifText: (n) => `Time for ${n}` },
-    sleep:       { label: 'Sleep',       icon: '😴', color: '#818cf8', scheduleTypes: ['sleep'],           defaults: { hours: 0, min: 0, dur: 0  }, notifText: (n) => n },
+    sleep:       { label: 'Sleep',       icon: '😴', color: '#818cf8', scheduleTypes: ['sleep'],           defaults: { hours: 0, min: 0, dur: 0  }, notifText: (n) => `${n} — time now` },
     custom:      { label: 'Custom',      icon: '📌', color: '#94a3b8', scheduleTypes: ['interval','fixed'], defaults: { hours: 4, min: 0, dur: 7  }, notifText: (n) => `Reminder: ${n}` },
   };
 
@@ -92,7 +92,7 @@
   function intMs(h, m) { return (h * 60 + m) * 60000; }
   function fmtDate(ts) { return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
   function fmtTime(ts) { return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
-  function fmtDT(ts) { return fmtDate(ts) + ', ' + fmtTime(ts); }
+  function fmtDT(ts) { if (!isFinite(ts)) return '—'; return fmtDate(ts) + ', ' + fmtTime(ts); }
   function todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
   function toLocalISO(d) { d = d || new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16); }
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -215,6 +215,12 @@
     });
     let streak = 0;
     const d = new Date(); d.setHours(0,0,0,0);
+    const todayStr = d.toDateString();
+    if (!dayMap[todayStr]) {
+      const todayTimes = getScheduledTimes(r, { after: d.getTime(), before: d.getTime() + 86400000 });
+      const allPending = todayTimes.length > 0 && todayTimes.every(t => !getStatus(r.id, t) || !getStatus(r.id, t).status);
+      if (allPending) d.setDate(d.getDate() - 1);
+    }
     while (true) {
       if (d.getTime() < r.startTime) break;
       if (!dayMap[d.toDateString()]) break;
@@ -341,6 +347,7 @@
     showView(prev);
     if (prev === 'dashboard') { navStack = []; renderDashboard(); }
     else if (prev === 'catList') renderCatList(currentCatForList);
+    else if (prev === 'detail' && currentId) openDetail(currentId);
   }
 
   let currentCatForList = null;
@@ -350,6 +357,11 @@
   // ════════════════════════════════════════════════════════
   function renderDashboard() {
     autoMarkMissed();
+    const hasReminders = state.reminders.length > 0;
+    const de = $('#dashboard-empty');
+    const th = $('#timeline-heading');
+    if (!hasReminders) { de.classList.remove('hidden'); th.style.display = 'none'; }
+    else { de.classList.add('hidden'); th.style.display = ''; }
     renderProgress();
     renderWaterWidget();
     renderTimeline();
@@ -370,16 +382,19 @@
     if (!wr) { w.classList.add('hidden'); return; }
     w.classList.remove('hidden');
     const logged = waterToday();
+    const inc = wr.goalUnit === 'ml' ? 250 : wr.goalUnit === 'litres' ? 0.25 : 1;
+    const incLabel = wr.goalUnit === 'ml' ? '+250' : wr.goalUnit === 'litres' ? '+0.25' : '+1';
     w.innerHTML = `
       <div class="water-info"><span>💧</span><span>${logged}/${wr.goalTarget}</span><span class="water-unit">${wr.goalUnit}</span></div>
-      <button class="btn-water" id="btn-water-log">+1</button>`;
-    $('#btn-water-log').onclick = () => { logWater(1); renderWaterWidget(); renderProgress(); };
+      <button class="btn-water" id="btn-water-log">${incLabel}</button>`;
+    $('#btn-water-log').onclick = () => { logWater(inc); renderWaterWidget(); renderProgress(); };
   }
 
   function renderTimeline() {
     const list = $('#timeline-list');
     const empty = $('#timeline-empty');
     list.innerHTML = '';
+    empty.classList.add('hidden');
 
     const now = Date.now();
     const endOfDay = new Date(); endOfDay.setHours(23,59,59,999);
@@ -744,7 +759,8 @@
 
     renderDetailUpcoming(r);
     renderDetailHistory(r);
-    navigate('detail');
+    if (navStack[navStack.length - 1] !== 'detail') navigate('detail');
+    else showView('detail');
   }
 
   function describeSchedule(r) {
